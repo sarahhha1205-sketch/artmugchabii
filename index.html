@@ -623,11 +623,11 @@ function readIcsField(block, name){
   const m = block.match(re);
   return m ? m[1].trim() : '';
 }
-function parseIcsDateKey(raw){
+function parseIcsDateParts(raw){
   const s = String(raw || '').trim();
   const m = s.match(/^(\d{4})(\d{2})(\d{2})/);
-  if(!m) return '';
-  return calDateKey(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+  if(!m) return null;
+  return { y: parseInt(m[1], 10), mo: parseInt(m[2], 10) - 1, d: parseInt(m[3], 10), hasTime: /T\d{6}/.test(s) };
 }
 function icsToEventsByDate(text){
   const body = unfoldIcs(text);
@@ -636,12 +636,34 @@ function icsToEventsByDate(text){
   for(let i = 1; i < chunks.length; i++){
     const block = chunks[i].split('END:VEVENT')[0];
     const startRaw = readIcsField(block, 'DTSTART');
+    const endRaw = readIcsField(block, 'DTEND');
     const summary = readIcsField(block, 'SUMMARY');
-    const key = parseIcsDateKey(startRaw);
-    if(!key) continue;
+    const start = parseIcsDateParts(startRaw);
+    if(!start) continue;
     const title = unescapeIcsText(summary) || '일정';
-    if(!byDate[key]) byDate[key] = [];
-    byDate[key].push({ title: title.slice(0, 48) });
+    const startDate = new Date(start.y, start.mo, start.d);
+
+    let endDate = startDate;
+    const end = parseIcsDateParts(endRaw);
+    if(end){
+      endDate = new Date(end.y, end.mo, end.d);
+      /* 종일 일정은 DTEND가 "다음날 00시" 기준(끝나는 날 다음날)이라 하루 빼줘야 실제 마지막 날이 맞음.
+         시간이 있는 일정(회의 등)은 그대로 시작일만 표시. */
+      if(!start.hasTime && !end.hasTime && endDate > startDate){
+        endDate.setDate(endDate.getDate() - 1);
+      }
+    }
+    if(start.hasTime) endDate = startDate;
+
+    const cursor = new Date(startDate);
+    let guard = 0;
+    while(cursor <= endDate && guard < 366){
+      const key = calDateKey(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+      if(!byDate[key]) byDate[key] = [];
+      byDate[key].push({ title: title.slice(0, 48) });
+      cursor.setDate(cursor.getDate() + 1);
+      guard++;
+    }
   }
   return byDate;
 }
