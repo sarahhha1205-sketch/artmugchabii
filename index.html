@@ -672,7 +672,8 @@ async function loadIcsEvents(){
   if(icsEventsCache) return icsEventsCache;
   for(let i = 0; i < CORS_PROXIES.length; i++){
     try{
-      const res = await fetchWithTimeout(CORS_PROXIES[i](CALENDAR_ICAL_URL), 7000);
+      const bustedUrl = CALENDAR_ICAL_URL + '?_=' + Date.now();
+      const res = await fetchWithTimeout(CORS_PROXIES[i](bustedUrl), 7000);
       if(!res.ok) continue;
       const text = await res.text();
       if(!/BEGIN:VCALENDAR/.test(text)) continue;
