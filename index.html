@@ -899,21 +899,27 @@ function renderPriceRows(rows){
 fetchSheetRows('서비스안내').then(renderServiceRows).catch(() => {});
 fetchSheetRows('공지사항').then(renderNoticeRows).catch(() => {});
 fetchSheetRows('사용장비').then(renderEquipmentRows).catch(() => {});
-fetchSheetRows('가격').then(renderPriceRows).catch(() => {});
+fetchSheetRows('가격').then(rows => { renderPriceRows(rows); syncFormPricingFromRows(rows); }).catch(() => {});
 
 /* ================= 신청 양식 미리보기 + 복사 ================= */
-['#rf-member-group', '#rf-length-group'].forEach(sel => {
-  document.querySelectorAll(`${sel} .select-btn`).forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll(`${sel} .select-btn`).forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      buildFormPreview();
+function bindMemberLengthButtons(){
+  ['#rf-member-group', '#rf-length-group'].forEach(sel => {
+    document.querySelectorAll(`${sel} .select-btn`).forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll(`${sel} .select-btn`).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        buildFormPreview();
+      });
     });
   });
-});
-document.querySelectorAll('#rf-extra-group .select-btn').forEach(btn => {
-  btn.addEventListener('click', () => { btn.classList.toggle('active'); buildFormPreview(); });
-});
+}
+function bindExtraButtons(){
+  document.querySelectorAll('#rf-extra-group .select-btn').forEach(btn => {
+    btn.addEventListener('click', () => { btn.classList.toggle('active'); buildFormPreview(); });
+  });
+}
+bindMemberLengthButtons();
+bindExtraButtons();
 function getSingleValue(sel, fallback){
   const active = document.querySelector(`${sel} .select-btn.active`);
   return active ? active.dataset.val : fallback;
@@ -923,12 +929,59 @@ function getExtraValues(){
   const vals = Array.from(active).map(b => b.dataset.val);
   return vals.length ? vals.join(', ') : '(선택 안함)';
 }
-const RF_BASE_PRICE = {
+let RF_BASE_PRICE = {
   '솔로': { '쇼츠': 30000, '1절': 45000, '완곡': 60000 },
   '듀엣': { '쇼츠': 45000, '1절': 60000, '완곡': 75000 },
   '단체곡': { '쇼츠': 70000, '1절': 85000, '완곡': 100000 }
 };
-const RF_EXTRA_PRICE = { '트랙추가': 10000, '인공화음': 30000, '추가수정': 10000, '인원추가': 30000 };
+let RF_EXTRA_PRICE = { '트랙추가': 10000, '인공화음': 30000, '추가수정': 10000, '인원추가': 30000 };
+
+/* 가격 탭 데이터를 신청 양식(인원/노래길이 버튼 + 추가옵션 버튼 + 금액 계산)에도 그대로 반영한다.
+   "추가옵션" 카테고리는 추가금 버튼으로, 그 외 카테고리는 인원 버튼 + 노래길이 버튼으로 사용된다.
+   "빠른마감"이라는 이름의 항목은 항상 금액을 더하는 게 아니라 총액 x2로 특별 처리한다. */
+function syncFormPricingFromRows(rows){
+  if(!rows || !rows.length) return;
+  const memberCats = [];
+  const lengthSet = [];
+  const newBase = {};
+  const newExtra = {};
+  const extraItems = [];
+  rows.forEach(row => {
+    const cat = (row['카테고리'] || '').trim();
+    const item = (row['항목'] || '').trim();
+    const priceRaw = (row['가격'] || '').trim();
+    const num = Number(priceRaw.replace(/[^0-9.-]/g, ''));
+    if(!cat || !item) return;
+    if(cat === '추가옵션'){
+      if(!extraItems.includes(item)) extraItems.push(item);
+      if(item !== '빠른마감') newExtra[item] = isNaN(num) ? 0 : num;
+      return;
+    }
+    if(!memberCats.includes(cat)) memberCats.push(cat);
+    if(!lengthSet.includes(item)) lengthSet.push(item);
+    if(!newBase[cat]) newBase[cat] = {};
+    newBase[cat][item] = isNaN(num) ? 0 : num;
+  });
+  if(!memberCats.length || !lengthSet.length) return;
+  RF_BASE_PRICE = newBase;
+  RF_EXTRA_PRICE = newExtra;
+
+  const memberWrap = document.getElementById('rf-member-group');
+  if(memberWrap){
+    memberWrap.innerHTML = memberCats.map((c, i) => `<button type="button" class="select-btn${i === 0 ? ' active' : ''}" data-val="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('');
+  }
+  const lengthWrap = document.getElementById('rf-length-group');
+  if(lengthWrap){
+    lengthWrap.innerHTML = lengthSet.map((l, i) => `<button type="button" class="select-btn${i === 0 ? ' active' : ''}" data-val="${escapeHtml(l)}">${escapeHtml(l)}</button>`).join('');
+  }
+  const extraWrap = document.getElementById('rf-extra-group');
+  if(extraWrap && extraItems.length){
+    extraWrap.innerHTML = extraItems.map(e => `<button type="button" class="select-btn" data-val="${escapeHtml(e)}">${escapeHtml(e)}</button>`).join('');
+  }
+  bindMemberLengthButtons();
+  bindExtraButtons();
+  buildFormPreview();
+}
 
 function calcFormPrice(member, length, extraList){
   const base = (RF_BASE_PRICE[member] || {})[length] || 0;
