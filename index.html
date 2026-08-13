@@ -228,6 +228,12 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
   font-family:inherit;font-size:15px;font-weight:700;color:var(--sub);cursor:pointer;transition:.15s;
 }
 .select-btn.active{background:var(--black);color:var(--mint);border-color:var(--black);}
+.qty-btn{display:inline-flex;align-items:center;gap:10px;padding:8px 8px 8px 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:15px;font-weight:700;color:var(--sub);}
+.qty-btn.active{color:var(--black);border-color:var(--black);}
+.qty-controls{display:flex;align-items:center;gap:6px;}
+.qty-count{min-width:16px;text-align:center;font-weight:800;color:var(--black);}
+.qty-step{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:13px;font-weight:800;color:var(--mint-deep);display:flex;align-items:center;justify-content:center;line-height:1;padding:0;font-family:inherit;}
+.qty-step:hover{background:var(--panel);}
 #form-preview{
   white-space:pre-wrap;background:var(--panel);border-radius:14px;padding:18px 20px;
   font-size:15px;margin-top:20px;color:var(--ink);line-height:1.9;
@@ -502,7 +508,14 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
         <button type="button" class="select-btn" data-val="인공화음">인공화음</button>
         <button type="button" class="select-btn" data-val="빠른마감">빠른마감</button>
         <button type="button" class="select-btn" data-val="추가수정">추가수정</button>
-        <button type="button" class="select-btn" data-val="인원추가">인원추가</button>
+        <div class="qty-btn" data-val="인원추가">
+          <span class="qty-label">인원추가</span>
+          <div class="qty-controls">
+            <button type="button" class="qty-step qty-minus" aria-label="인원추가 감소">－</button>
+            <span class="qty-count">0</span>
+            <button type="button" class="qty-step qty-plus" aria-label="인원추가 증가">＋</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -769,9 +782,20 @@ renderCalendarMonth();
 
 /* ================= 포폴 - 구글 시트 연동 (나중에 시트 링크 받으면 아래 PORTFOLIO_CSV_URL만 채우면 됨) =================
    시트에는 "카테고리(또는 제목), 링크" 형태로 한 줄씩 적으면 됨. 링크가 mp4/webm/mov면 영상, 유튜브 링크면 임베드, 그 외엔 이미지로 처리. */
+/* gviz(탭 이름으로 불러오는 방식)는 한 열에 숫자와 텍스트가 섞여 있으면(예: 가격 칸에 "가격의 2배")
+   구글이 텍스트 값을 통째로 빈 칸으로 날려버리는 버그가 있어서, 탭별 고유번호(gid)로 CSV를 받아오는
+   export 방식을 쓴다. 이 방식은 셀에 있는 값을 그대로 가져와서 안전하다. */
 const MGMT_SHEET_ID = '15XgzomN4un5xDfejJ9ZGQfyTLRJE00bsS9nj_aaCvdg';
+const MGMT_SHEET_GIDS = {
+  '포트폴리오': 0,
+  '가격': 1619590918,
+  '사용장비': 188662593,
+  '공지사항': 1757832842,
+  '서비스안내': 1055577052
+};
 function sheetCsvUrl(sheetName){
-  return `https://docs.google.com/spreadsheets/d/${MGMT_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
+  const gid = MGMT_SHEET_GIDS[sheetName];
+  return `https://docs.google.com/spreadsheets/d/${MGMT_SHEET_ID}/export?format=csv&gid=${gid}&_=${Date.now()}`;
 }
 const PORTFOLIO_CSV_URL = sheetCsvUrl('포트폴리오');
 
@@ -945,9 +969,23 @@ function bindMemberLengthButtons(){
     });
   });
 }
+/* "인원추가"는 인당 추가되는 옵션이라 여러 번 선택(수량) 가능해야 해서, 다른 추가옵션과 달리
+   토글 버튼이 아니라 －/＋ 로 개수를 늘리고 줄이는 위젯(.qty-btn)으로 따로 처리한다. */
+const QTY_EXTRA_NAME = '인원추가';
 function bindExtraButtons(){
   document.querySelectorAll('#rf-extra-group .select-btn').forEach(btn => {
     btn.addEventListener('click', () => { btn.classList.toggle('active'); buildFormPreview(); });
+  });
+  document.querySelectorAll('#rf-extra-group .qty-btn').forEach(qtyBtn => {
+    const countEl = qtyBtn.querySelector('.qty-count');
+    const setCount = (n) => {
+      const next = Math.max(0, Math.min(20, n));
+      countEl.textContent = next;
+      qtyBtn.classList.toggle('active', next > 0);
+      buildFormPreview();
+    };
+    qtyBtn.querySelector('.qty-plus')?.addEventListener('click', () => setCount(parseInt(countEl.textContent, 10) + 1));
+    qtyBtn.querySelector('.qty-minus')?.addEventListener('click', () => setCount(parseInt(countEl.textContent, 10) - 1));
   });
 }
 bindMemberLengthButtons();
@@ -956,10 +994,20 @@ function getSingleValue(sel, fallback){
   const active = document.querySelector(`${sel} .select-btn.active`);
   return active ? active.dataset.val : fallback;
 }
+/* 추가옵션 선택 목록을 { val, qty } 형태로 모은다. 일반 토글 버튼은 qty 1, 인원추가 위젯은 실제 선택한 개수. */
+function getExtraSelections(){
+  const toggled = Array.from(document.querySelectorAll('#rf-extra-group .select-btn.active')).map(b => ({ val: b.dataset.val, qty: 1 }));
+  const qtyBtn = document.querySelector('#rf-extra-group .qty-btn');
+  if(qtyBtn){
+    const qty = parseInt(qtyBtn.querySelector('.qty-count')?.textContent || '0', 10);
+    if(qty > 0) toggled.push({ val: qtyBtn.dataset.val, qty });
+  }
+  return toggled;
+}
 function getExtraValues(){
-  const active = document.querySelectorAll('#rf-extra-group .select-btn.active');
-  const vals = Array.from(active).map(b => b.dataset.val);
-  return vals.length ? vals.join(', ') : '(선택 안함)';
+  const list = getExtraSelections();
+  if(!list.length) return '(선택 안함)';
+  return list.map(e => e.qty > 1 ? `${e.val} x${e.qty}` : e.val).join(', ');
 }
 let RF_BASE_PRICE = {
   '솔로': { '쇼츠': 30000, '1절': 45000, '완곡': 60000 },
@@ -1008,29 +1056,42 @@ function syncFormPricingFromRows(rows){
   }
   const extraWrap = document.getElementById('rf-extra-group');
   if(extraWrap && extraItems.length){
-    extraWrap.innerHTML = extraItems.map(e => `<button type="button" class="select-btn" data-val="${escapeHtml(e)}">${escapeHtml(e)}</button>`).join('');
+    extraWrap.innerHTML = extraItems.map(e => {
+      if(e === QTY_EXTRA_NAME){
+        return `<div class="qty-btn" data-val="${escapeHtml(e)}">
+          <span class="qty-label">${escapeHtml(e)}</span>
+          <div class="qty-controls">
+            <button type="button" class="qty-step qty-minus" aria-label="${escapeHtml(e)} 감소">－</button>
+            <span class="qty-count">0</span>
+            <button type="button" class="qty-step qty-plus" aria-label="${escapeHtml(e)} 증가">＋</button>
+          </div>
+        </div>`;
+      }
+      return `<button type="button" class="select-btn" data-val="${escapeHtml(e)}">${escapeHtml(e)}</button>`;
+    }).join('');
   }
   bindMemberLengthButtons();
   bindExtraButtons();
   buildFormPreview();
 }
 
-function calcFormPrice(member, length, extraList){
+function calcFormPrice(member, length, extraSelections){
   const base = (RF_BASE_PRICE[member] || {})[length] || 0;
-  const fixedExtraSum = extraList
-    .filter((e) => e !== '빠른마감')
-    .reduce((sum, e) => sum + (RF_EXTRA_PRICE[e] || 0), 0);
+  const hasFastTrack = extraSelections.some((e) => e.val === '빠른마감');
+  const fixedExtraSum = extraSelections
+    .filter((e) => e.val !== '빠른마감')
+    .reduce((sum, e) => sum + (RF_EXTRA_PRICE[e.val] || 0) * e.qty, 0);
   const subtotal = base + fixedExtraSum;
-  return extraList.includes('빠른마감') ? subtotal * 2 : subtotal;
+  return hasFastTrack ? subtotal * 2 : subtotal;
 }
 
 function buildFormPreview(){
   const member = getSingleValue('#rf-member-group', '솔로');
   const length = getSingleValue('#rf-length-group', '쇼츠');
-  const extraList = Array.from(document.querySelectorAll('#rf-extra-group .select-btn.active')).map((b) => b.dataset.val);
-  const extra = extraList.length ? extraList.join(', ') : '(선택 안함)';
-  const total = calcFormPrice(member, length, extraList);
-  const totalText = total.toLocaleString('ko-KR') + '원' + (extraList.includes('빠른마감') ? ' (빠른마감 적용, 기본금액 X2)' : '');
+  const extraSelections = getExtraSelections();
+  const extra = getExtraValues();
+  const total = calcFormPrice(member, length, extraSelections);
+  const totalText = total.toLocaleString('ko-KR') + '원' + (extraSelections.some((e) => e.val === '빠른마감') ? ' (빠른마감 적용, 기본금액 X2)' : '');
   const text =
 `[믹싱 신청 양식]
 
@@ -1065,6 +1126,11 @@ function resetRigForm(){
   document.querySelectorAll('#rf-member-group .select-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   document.querySelectorAll('#rf-length-group .select-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   document.querySelectorAll('#rf-extra-group .select-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#rf-extra-group .qty-btn').forEach(b => {
+    b.classList.remove('active');
+    const c = b.querySelector('.qty-count');
+    if(c) c.textContent = '0';
+  });
   const agree = document.getElementById('rf-agree');
   if(agree) agree.checked = false;
   toggleFormSubmit();
