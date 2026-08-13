@@ -213,6 +213,9 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
 }
 .portfolio-item video,.portfolio-item img,.portfolio-item iframe{width:100%;height:100%;object-fit:cover;display:block;border:none;}
 .portfolio-item.pending{display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;font-weight:700;text-align:center;padding:8px;}
+.portfolio-group{margin-bottom:22px;}
+.portfolio-group:last-child{margin-bottom:0;}
+.portfolio-group-title{font-family:'Jalnan2',cursive;font-size:23px;font-weight:400;color:var(--mint-deep);margin-bottom:10px;}
 
 /* ================= 신청 양식 ================= */
 .form-note-box{background:var(--panel);padding:16px 20px;border-radius:16px;font-size:14.5px;color:var(--sub);line-height:1.75;margin-bottom:22px;}
@@ -463,8 +466,10 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
 <section class="section" id="portfolio">
   <div class="section-head"><div class="section-icon"></div><div class="section-title">포폴</div></div>
   <p class="section-sub">지금까지 작업한 포트폴리오입니다.</p>
-  <div class="portfolio-row drag-scroll" id="portfolio-row">
-    <div class="portfolio-item pending">준비중</div>
+  <div id="portfolio-groups">
+    <div class="portfolio-row drag-scroll" id="portfolio-row">
+      <div class="portfolio-item pending">준비중</div>
+    </div>
   </div>
 </section>
 
@@ -775,14 +780,13 @@ function getYoutubeId(url){
   return m ? m[1] : '';
 }
 function parsePortfolioCsv(text){
-  const lines = text.trim().split('\n').slice(1);
-  return lines.map(line => {
-    const idx = line.indexOf(',');
-    if(idx === -1) return null;
-    const title = line.slice(0, idx).trim();
-    const link = line.slice(idx + 1).trim();
+  const rows = csvRowsToObjects(parseCsvGeneric(text));
+  return rows.map(row => {
+    const title = (row['제목'] || '').trim();
+    const link = (row['링크'] || '').trim();
+    const group = (row['구분'] || '').trim();
     if(!link) return null;
-    return { title, link };
+    return { title, link, group };
   }).filter(Boolean);
 }
 function portfolioItemHtml({ title, link }){
@@ -797,11 +801,39 @@ function portfolioItemHtml({ title, link }){
   }
   return `<div class="portfolio-item"><img src="${safeLink}" alt="${escapeHtml(title)}" loading="lazy"></div>`;
 }
+const PORTFOLIO_GROUP_ORDER = ['솔로', '듀엣', '단체곡'];
 function renderPortfolio(items){
-  const wrap = document.getElementById('portfolio-row');
+  const wrap = document.getElementById('portfolio-groups');
   if(!wrap || !items.length) return;
-  wrap.innerHTML = items.map(portfolioItemHtml).join('');
-  makeDragScroll(wrap);
+
+  const hasGroups = items.some(i => i.group);
+  if(!hasGroups){
+    wrap.innerHTML = `<div class="portfolio-row drag-scroll" id="portfolio-row"></div>`;
+    const row = document.getElementById('portfolio-row');
+    row.innerHTML = items.map(portfolioItemHtml).join('');
+    makeDragScroll(row);
+    return;
+  }
+
+  const order = [...PORTFOLIO_GROUP_ORDER];
+  items.forEach(i => { if(i.group && !order.includes(i.group)) order.push(i.group); });
+
+  wrap.innerHTML = order
+    .filter(g => items.some(i => i.group === g))
+    .map(g => `
+      <div class="portfolio-group">
+        <div class="portfolio-group-title">${escapeHtml(g)}</div>
+        <div class="portfolio-row drag-scroll" data-group="${escapeHtml(g)}"></div>
+      </div>`)
+    .join('');
+
+  order.forEach(g => {
+    const row = wrap.querySelector(`.portfolio-row[data-group="${CSS.escape(g)}"]`);
+    if(!row) return;
+    const groupItems = items.filter(i => i.group === g);
+    row.innerHTML = groupItems.map(portfolioItemHtml).join('');
+    makeDragScroll(row);
+  });
 }
 function makeDragScroll(row){
   let dragging = false, startX = 0, startScroll = 0, moved = false;
