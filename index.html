@@ -298,7 +298,7 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
 <!-- ============ 서비스 안내 ============ -->
 <section class="section" id="service">
   <div class="section-head"><div class="section-icon"></div><div class="section-title">서비스 안내</div></div>
-  <div class="service-grid">
+  <div class="service-grid" id="service-grid">
     <div class="service-card">
       <span class="service-badge">오픈 이벤트</span>
       <b>전체 작업 10% 할인</b>
@@ -315,7 +315,7 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
 <!-- ============ 공지사항 ============ -->
 <section class="section" id="notice">
   <div class="section-head"><div class="section-icon"></div><div class="section-title">공지사항</div></div>
-  <div class="notice-list">
+  <div class="notice-list" id="notice-list">
     <div class="notice-item"><span class="notice-num">1</span><span>공지사항을 읽지 않아 생기는 불이익은 책임지지 않습니다.</span></div>
     <div class="notice-item"><span class="notice-num">2</span><span>완성된 믹싱본은 포트폴리오로 사용됩니다.</span></div>
     <div class="notice-item"><span class="notice-num">3</span><span>음원 2차 수정은 불가합니다.</span></div>
@@ -332,13 +332,13 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
 <!-- ============ 사용장비 ============ -->
 <section class="section" id="equipment">
   <div class="section-head"><div class="section-icon"></div><div class="section-title">사용장비</div></div>
-  <div class="equip-list">
+  <div class="equip-list" id="equip-list">
     <div class="equip-row"><span class="equip-label">스피커</span><span class="equip-value">현재 사용하지 않고 있습니다</span></div>
     <div class="equip-row"><span class="equip-label">헤드폰</span><span class="equip-value">HD 660S2</span></div>
     <div class="equip-row"><span class="equip-label">DAW</span><span class="equip-value">Studio PRO 8 ( 구 스튜디오원 )</span></div>
     <div class="equip-row"><span class="equip-label">플러그인</span><span class="equip-value">Melodyne 5 Studio, Ozone 12, PRO-Q4, Complete, Waves 등 사용중</span></div>
   </div>
-  <div class="equip-note">오직 정품만 사용합니다.</div>
+  <div class="equip-note" id="equip-note">오직 정품만 사용합니다.</div>
 </section>
 
 <!-- ============ 작업달력 ============ -->
@@ -396,7 +396,7 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
 <!-- ============ 가격 ============ -->
 <section class="section" id="price">
   <div class="section-head"><div class="section-icon"></div><div class="section-title">가격</div></div>
-  <div class="price-blocks">
+  <div class="price-blocks" id="price-blocks">
     <div class="price-block">
       <div class="price-block-title">솔로</div>
       <div class="price-list">
@@ -497,6 +497,7 @@ img,video,iframe{max-width:100%;display:block;-webkit-user-drag:none;user-drag:n
         <button type="button" class="select-btn" data-val="인공화음">인공화음</button>
         <button type="button" class="select-btn" data-val="빠른마감">빠른마감</button>
         <button type="button" class="select-btn" data-val="추가수정">추가수정</button>
+        <button type="button" class="select-btn" data-val="인원추가">인원추가</button>
       </div>
     </div>
   </div>
@@ -763,7 +764,11 @@ renderCalendarMonth();
 
 /* ================= 포폴 - 구글 시트 연동 (나중에 시트 링크 받으면 아래 PORTFOLIO_CSV_URL만 채우면 됨) =================
    시트에는 "카테고리(또는 제목), 링크" 형태로 한 줄씩 적으면 됨. 링크가 mp4/webm/mov면 영상, 유튜브 링크면 임베드, 그 외엔 이미지로 처리. */
-const PORTFOLIO_CSV_URL = ''; // 예: 'https://docs.google.com/spreadsheets/d/e/.../pub?gid=0&single=true&output=csv'
+const MGMT_SHEET_ID = '15XgzomN4un5xDfejJ9ZGQfyTLRJE00bsS9nj_aaCvdg';
+function sheetCsvUrl(sheetName){
+  return `https://docs.google.com/spreadsheets/d/${MGMT_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
+}
+const PORTFOLIO_CSV_URL = sheetCsvUrl('포트폴리오');
 
 function getYoutubeId(url){
   const m = String(url || '').match(/[?&]v=([^&]+)/) || String(url || '').match(/youtu\.be\/([^?&]+)/) || String(url || '').match(/\/embed\/([^?&]+)/);
@@ -812,6 +817,89 @@ if(PORTFOLIO_CSV_URL){
     .then(text => renderPortfolio(parsePortfolioCsv(text)))
     .catch(() => {});
 }
+
+/* ================= 서비스안내 / 공지사항 / 사용장비 / 가격 - 관리시트 탭 연동 =================
+   같은 관리시트(MGMT_SHEET_ID) 안에 탭을 만들어두면, 탭 이름으로 CSV를 읽어와서 각 섹션을 다시 그린다.
+   시트가 비어있거나 못 불러오면 원래 있던 하드코딩 내용이 그대로 남아있어서 안전하다. */
+function csvRowsToObjects(rows){
+  if(!rows.length) return [];
+  const header = rows[0].map(h => String(h || '').trim());
+  return rows.slice(1)
+    .filter(r => r.some(c => String(c || '').trim() !== ''))
+    .map(r => {
+      const obj = {};
+      header.forEach((h, i) => { obj[h] = String(r[i] || '').trim(); });
+      return obj;
+    });
+}
+function fetchSheetRows(sheetName){
+  return fetch(sheetCsvUrl(sheetName))
+    .then(res => { if(!res.ok) throw new Error('bad status'); return res.text(); })
+    .then(text => csvRowsToObjects(parseCsvGeneric(text)));
+}
+
+/* 서비스안내: 배지, 제목, 설명 */
+function renderServiceRows(rows){
+  const wrap = document.getElementById('service-grid');
+  if(!wrap || !rows.length) return;
+  wrap.innerHTML = rows.map(row => `
+    <div class="service-card">
+      ${row['배지'] ? `<span class="service-badge">${escapeHtml(row['배지'])}</span>` : ''}
+      <b>${escapeHtml(row['제목'] || '')}</b>
+      <p>${escapeHtml(row['설명'] || '')}</p>
+    </div>`).join('');
+}
+
+/* 공지사항: 내용 */
+function renderNoticeRows(rows){
+  const wrap = document.getElementById('notice-list');
+  if(!wrap || !rows.length) return;
+  wrap.innerHTML = rows.map((row, i) => `
+    <div class="notice-item"><span class="notice-num">${i + 1}</span><span>${escapeHtml(row['내용'] || '')}</span></div>`).join('');
+}
+
+/* 사용장비: 항목, 내용 (항목이 "비고"면 하단 안내문으로 처리) */
+function renderEquipmentRows(rows){
+  const listWrap = document.getElementById('equip-list');
+  const noteWrap = document.getElementById('equip-note');
+  if(!listWrap || !rows.length) return;
+  const rowsOnly = rows.filter(r => (r['항목'] || '').trim() !== '비고');
+  const noteRow = rows.find(r => (r['항목'] || '').trim() === '비고');
+  listWrap.innerHTML = rowsOnly.map(row => `
+    <div class="equip-row"><span class="equip-label">${escapeHtml(row['항목'] || '')}</span><span class="equip-value">${escapeHtml(row['내용'] || '')}</span></div>`).join('');
+  if(noteRow && noteWrap) noteWrap.textContent = noteRow['내용'] || '';
+}
+
+/* 가격: 카테고리, 항목, 가격 (같은 카테고리끼리 묶어서 블록 하나) */
+function renderPriceRows(rows){
+  const wrap = document.getElementById('price-blocks');
+  if(!wrap || !rows.length) return;
+  const order = [];
+  const grouped = {};
+  rows.forEach(row => {
+    const cat = row['카테고리'] || '';
+    if(!cat) return;
+    if(!grouped[cat]){ grouped[cat] = []; order.push(cat); }
+    grouped[cat].push(row);
+  });
+  wrap.innerHTML = order.map(cat => `
+    <div class="price-block">
+      <div class="price-block-title">${escapeHtml(cat)}</div>
+      <div class="price-list">
+        ${grouped[cat].map(row => {
+          const priceRaw = (row['가격'] || '').trim();
+          const num = Number(priceRaw.replace(/[^0-9.-]/g, ''));
+          const priceText = priceRaw && !isNaN(num) && num !== 0 ? num.toLocaleString('ko-KR') + '원' : priceRaw;
+          return `<div class="price-row"><span>${escapeHtml(row['항목'] || '')}</span><span>${escapeHtml(priceText)}</span></div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+fetchSheetRows('서비스안내').then(renderServiceRows).catch(() => {});
+fetchSheetRows('공지사항').then(renderNoticeRows).catch(() => {});
+fetchSheetRows('사용장비').then(renderEquipmentRows).catch(() => {});
+fetchSheetRows('가격').then(renderPriceRows).catch(() => {});
 
 /* ================= 신청 양식 미리보기 + 복사 ================= */
 ['#rf-member-group', '#rf-length-group'].forEach(sel => {
