@@ -920,8 +920,8 @@ function renderPriceRows(rows){
       <div class="price-list">
         ${grouped[cat].map(row => {
           const priceRaw = (row['가격'] || '').trim();
-          const num = Number(priceRaw.replace(/[^0-9.-]/g, ''));
-          const priceText = priceRaw && !isNaN(num) && num !== 0 ? num.toLocaleString('ko-KR') + '원' : priceRaw;
+          const isPureNumber = /^[0-9][0-9,]*$/.test(priceRaw);
+          const priceText = isPureNumber ? Number(priceRaw.replace(/,/g, '')).toLocaleString('ko-KR') + '원' : priceRaw;
           return `<div class="price-row"><span>${escapeHtml(row['항목'] || '')}</span><span>${escapeHtml(priceText)}</span></div>`;
         }).join('')}
       </div>
