@@ -1,0 +1,687 @@
+(function () {
+  var PRICE_ITEMS = {
+    "api-fan": [
+      {
+        title: "팬 캐릭터 뽀뽀",
+        desc: "팬 캐릭터가 다가가 캐릭터의 몸 한 부위에 입술자국을 남깁니다.\n팬 캐릭터가 없으면 기본 곰돌이로 세팅해 드립니다. (곰돌이 색상 변경 가능)",
+        price: "50,000",
+        vts: true,
+        vtsPrice: "70,000"
+      },
+      {
+        title: "팬 캐릭터 뺨 당기기",
+        desc: "팬 캐릭터가 나타나 캐릭터의 뺨을 당깁니다.\n팬 캐릭터가 없으면 기본 곰돌이로 세팅해 드립니다. (곰돌이 색상 변경 가능)",
+        price: "50,000"
+      },
+      {
+        title: "팬 캐릭터 망치",
+        desc: "팬 캐릭터가 나타나 캐릭터의 머리를 망치로 강타합니다.\n팬 캐릭터가 없으면 기본 곰돌이로 세팅해 드립니다. (곰돌이 색상 변경 가능)",
+        price: "70,000",
+        vtsOnly: true
+      },
+      {
+        title: "팬 캐릭터 돌아다니기",
+        desc: "팬 캐릭터가 캐릭터 주변을 돌아다닙니다.\n도네이션한 시청자의 닉네임을 가진 팬 캐릭터가 나타나 돌아다니게 할 수 있습니다.",
+        price: "50,000"
+      },
+      {
+        title: "팬 캐릭터 옆에서 둥둥",
+        desc: "팬 캐릭터가 캐릭터 옆에서 둥둥 떠다닙니다.\n팬 캐릭터 돌아다니기에 추가할 수 있는 옵션입니다.",
+        price: "20,000"
+      },
+      {
+        title: "팬 캐릭터 머리 위에서 뛰기",
+        desc: "팬 캐릭터가 캐릭터 머리 위에서 통통 뜁니다.\n팬 캐릭터 돌아다니기에 추가할 수 있는 옵션입니다.",
+        price: "20,000"
+      },
+      {
+        title: "팬 캐릭터 던지기",
+        desc: "팬 캐릭터를 던질 수 있는 기능입니다.\n팬 캐릭터 돌아다니기에 추가할 수 있는 옵션입니다.",
+        price: "20,000"
+      },
+      {
+        title: "팬 캐릭터 납작",
+        desc: "팬 캐릭터를 손바닥으로 눌러 납작하게 만듭니다.\n팬 캐릭터 돌아다니기에 추가할 수 있는 옵션입니다.",
+        price: "20,000"
+      },
+      {
+        title: "팬 캐릭터 물건 던지기",
+        desc: "팬 캐릭터가 나를 향해 물건을 던집니다.\n팬 캐릭터 돌아다니기에 추가할 수 있는 옵션입니다.",
+        price: "20,000"
+      },
+      {
+        title: "팬 캐릭터 따라다니기",
+        desc: "팬 캐릭터가 따라다니게 할 수 있는 기능입니다.",
+        price: "20,000"
+      }
+    ],
+    "api-basic": [
+      {
+        title: "던지기",
+        desc: "캐릭터에게 물건을 던질 수 있습니다.",
+        price: "10,000",
+        vts: true
+      },
+      {
+        title: "물맞기",
+        desc: "캐릭터에게 물을 쏠 수 있습니다.",
+        price: "15,000"
+      },
+      {
+        title: "날아가기",
+        desc: "캐릭터가 물건을 맞고 멀리 날아갑니다.",
+        price: "15,000"
+      },
+      {
+        title: "붙이기",
+        desc: "원하는 물건이 날아와 캐릭터의 몸에 달라붙습니다.",
+        price: "20,000",
+        vts: true,
+        vtsPrice: "30,000"
+      },
+      {
+        title: "쓰다듬기",
+        desc: "캐릭터의 머리를 쓰다듬어줍니다.",
+        price: "20,000",
+        vts: true
+      },
+      {
+        title: "머리쾅 (떨어지기)",
+        desc: "하늘에서 떨어진 PROP이 캐릭터의 머리를 강타합니다.",
+        price: "20,000"
+      },
+      {
+        title: "머리쾅 (망치)",
+        desc: "망치로 캐릭터의 머리를 강타합니다.",
+        price: "20,000",
+        vts: true
+      },
+      {
+        title: "와르르",
+        desc: "캐릭터에게 물건들이 쏟아집니다.",
+        price: "20,000",
+        vts: true
+      },
+      {
+        title: "윙크",
+        desc: "캐릭터가 한쪽 눈을 감을 경우, 자동으로 눈가에 하트 파티클이 출력됩니다.",
+        price: "20,000",
+        vts: true
+      },
+      {
+        title: "자동 잠자기",
+        desc: "자리를 비우면 캐릭터가 잠드는 모션을 취합니다.",
+        price: "20,000"
+      },
+      {
+        title: "물음표",
+        desc: "시청자의 ? 채팅에 반응해 화면에 물음표를 띄웁니다.",
+        price: "15,000",
+        vts: true,
+        vtsPrice: "30,000"
+      },
+      {
+        title: "깔리기",
+        desc: "커다란 물건이 내려와 캐릭터의 몸을 깔아뭉갭니다.",
+        price: "30,000"
+      }
+    ],
+    "api-custom": [
+      {
+        title: "안경 자물쇠",
+        desc: "캐릭터에게 자물쇠가 채워진 안경을 씌워줍니다.",
+        price: "40,000"
+      },
+      {
+        title: "마법",
+        desc: "캐릭터의 손에서 마법이 나갑니다.",
+        price: "30,000"
+      },
+      {
+        title: "번개 맞기",
+        desc: "캐릭터가 번개를 맞습니다.",
+        price: "40,000"
+      },
+      {
+        title: "랜덤 가챠 가방",
+        desc: "폭탄 혹은 돈이 랜덤으로 나옵니다.",
+        price: "70,000"
+      },
+      {
+        title: "아봉",
+        desc: "일정 시간동안 캐릭터의 입을 막습니다. 특정 키 입력으로도 동작하게 할 수 있습니다.",
+        price: "30,000"
+      },
+      {
+        title: "4컷 사진",
+        desc: "다양한 필터와 스티커를 커스텀하여 나만의 방셀을 찍을 수 있습니다. 기본 고양이, 안경, 해골 필터가 있으며 원하는 필터 하나를 무료로 제작해 드립니다. 도네한 시청자의 이름을 사진 아래에 넣을 수 있고, 찍은 사진은 별도 폴더에 고화질로 저장됩니다.",
+        price: "50,000"
+      },
+      {
+        title: "동전 / 치즈 먹기",
+        desc: "캐릭터가 동전 또는 치즈를 먹습니다.",
+        price: "30,000",
+        vtsOnly: true
+      },
+      {
+        title: "전광판",
+        desc: "화면에 전광판이 나타나 원하는 문구를 표시합니다.",
+        price: "30,000",
+        vtsOnly: true
+      },
+      {
+        title: "악마 소환",
+        desc: "마법진에서 소환되는 느낌으로 악마뿔과 날개를 장착한 캐릭터가 등장합니다. 마법진 색, 등장 효과, 날개 색상, 포즈나 표정을 자유롭게 커스텀할 수 있습니다.",
+        price: "50,000"
+      },
+      {
+        title: "천사 강림",
+        desc: "하늘에서 강림하는 느낌으로 천사 날개와 헤일로를 장착한 캐릭터가 등장합니다. 빛줄기 색, 등장 효과, 날개 색상, 포즈나 표정을 자유롭게 커스텀할 수 있습니다.",
+        price: "50,000"
+      },
+      {
+        title: "마법소녀 변신",
+        desc: "의상, 헤어를 교체하며 변신합니다. 변신 파티클, 변신 자세, 변신 시 실루엣 색상 등을 자유롭게 커스텀할 수 있습니다.",
+        price: "60,000"
+      },
+      {
+        title: "인형뽑기",
+        desc: "인형뽑기 기계 안에 캐릭터 인형이 가득 쌓이고, 집게가 하나를 뽑아 출구로 떨어뜨리면 캐릭터가 등장합니다. 가짜 캐릭터를 뽑을 수 있습니다. 캐릭터와 원하는 소품을 섞어서 배치할 수 있습니다. 뽑기 확률도 자유롭게 설정할 수 있습니다.",
+        price: "80,000"
+      },
+      {
+        title: "선물상자 짜잔",
+        desc: "선물상자가 열리며 캐릭터가 짜잔 하고 등장합니다.",
+        price: "30,000"
+      },
+      {
+        title: "불꽃놀이",
+        desc: "화면에 불꽃이 터지며 화려한 불꽃놀이가 펼쳐집니다.",
+        price: "40,000"
+      },
+      {
+        title: "대포 발사",
+        desc: "캐릭터가 대포 속으로 들어가 화면 밖으로 발사됩니다.",
+        price: "50,000"
+      },
+      {
+        title: "운세 뽑기",
+        desc: "카드가 펼쳐지고 한 장을 뽑으면 오늘의 운세가 나타납니다. 카드 문구와 폰트 색상, 카드 뒷면의 색상을 자유롭게 커스텀할 수 있습니다.",
+        price: "50,000"
+      },
+      {
+        title: "무대 공연",
+        desc: "캐릭터가 춤 애니메이션에 맞추어 춤을 춥니다. 무대의 색상, 뒷배경 영상, 파티클 등 다양한 효과를 추가하거나 커스텀할 수 있습니다.",
+        price: "50,000"
+      },
+      {
+        title: "시청자 던지기",
+        desc: "도네이션을 한 시청자의 이름이 던지기 프랍에 들어갑니다.",
+        price: "30,000"
+      }
+    ],
+    "prop-production": [
+      {
+        title: "3D 팬캐릭터 제작",
+        desc: "상호작용 가능한 3D 팬 캐릭터를 제작해 드립니다.",
+        price: "50,000"
+      },
+      {
+        title: "3D 소품 제작",
+        desc: "상호작용 가능한 3D 소품을 제작해 드립니다.",
+        price: "30,000"
+      }
+    ]
+  };
+
+  var ORDER_CONFIG = {
+    privateFee: 20000,
+    privateLabel: "비공개 (+20,000원)",
+    platforms: [
+      { id: "soop", label: "SOOP(숲)" },
+      { id: "chzzk", label: "치지직" },
+      { id: "toonation", label: "투네이션" }
+    ],
+    platformOtherPlaceholder: "플랫폼 입력",
+    warudoVersions: [
+      { id: "standard", label: "와루도 일반", default: true },
+      { id: "pro", label: "Warudo PRO" }
+    ],
+    setupMethods: [
+      { id: "remote", label: "원격 세팅 (초보자)" },
+      { id: "file", label: "파일 전달 (숙련자)" }
+    ],
+    categories: [
+      { key: "api-fan", label: "팬 캐릭터 API" },
+      { key: "api-basic", label: "기본 API" },
+      { key: "api-custom", label: "특수 API" },
+      { key: "prop-production", label: "PROP 제작" }
+    ]
+  };
+
+  var form = document.getElementById("order-form");
+  var preview = document.getElementById("order-preview");
+  var copyBtn = document.getElementById("order-copy");
+  var platformTabs = document.getElementById("orderPlatformTabs");
+  if (!form || !preview) return;
+
+  var orderPlatform = "warudo";
+
+  function vtsAdjustedPrice(item) {
+    if (orderPlatform !== "vts" || !item.vts) return item.price;
+    if (item.vtsPrice) return item.vtsPrice;
+    var n = parseAmount(item.price);
+    return (n + 10000).toLocaleString("ko-KR");
+  }
+
+  function getPlatformEntries(categoryKey) {
+    var items = PRICE_ITEMS[categoryKey] || [];
+    var entries = items.map(function (item, idx) { return { item: item, idx: idx }; });
+    entries = entries.filter(function (e) { return orderPlatform === "vts" ? !e.item.warudoOnly : !e.item.vtsOnly; });
+    if (categoryKey === "prop-production") return sortByPrice(entries);
+    if (orderPlatform !== "vts") return sortByPrice(entries);
+    if (categoryKey === "api-fan") entries = entries.filter(function (e) { return e.item.vts || e.item.vtsOnly; });
+    if (categoryKey === "api-basic") entries = entries.filter(function (e) { return e.item.vts || e.item.vtsOnly; });
+    if (categoryKey === "api-custom") entries = entries.filter(function (e) { return e.item.vts || e.item.vtsOnly; });
+    return sortByPrice(entries);
+  }
+
+  function sortByPrice(entries) {
+    return entries.slice().sort(function (a, b) {
+      return parseAmount(vtsAdjustedPrice(a.item)) - parseAmount(vtsAdjustedPrice(b.item));
+    });
+  }
+
+  function parseAmount(text) {
+    if (!text) return 0;
+    var match = String(text).match(/([\d,]+)/);
+    return match ? parseInt(match[1].replace(/,/g, ""), 10) : 0;
+  }
+
+  function formatWon(amount) {
+    return amount.toLocaleString("ko-KR") + "원";
+  }
+
+  function hasVariableEstimate(selectedApis) {
+    return selectedApis.some(function (entry) {
+      var price = entry.item && entry.item.price;
+      return String(price || "").includes("문의");
+    });
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escapeHtmlBr(text) {
+    return escapeHtml(text).replace(/\n/g, "<br>");
+  }
+
+  function createField(label, html) {
+    return (
+      '<div class="order-field">' +
+        '<span class="order-label">' + escapeHtml(label) + "</span>" +
+        html +
+      "</div>"
+    );
+  }
+
+  function createRadioGroup(name, items) {
+    var defaultId = (items.find(function (item) { return item.default; }) || items[0]).id;
+    return (
+      '<div class="order-choice-group">' +
+        items.map(function (item) {
+          return (
+            '<label class="order-choice">' +
+              '<input type="radio" name="' + name + '" value="' + item.id + '"' +
+              (item.id === defaultId ? " checked" : "") + ">" +
+              "<span>" + escapeHtml(item.label) + "</span>" +
+            "</label>"
+          );
+        }).join("") +
+      "</div>"
+    );
+  }
+
+  function createCheckbox(name, value, label, extraClass) {
+    return (
+      '<label class="order-choice' + (extraClass ? " " + extraClass : "") + '">' +
+        '<input type="checkbox" name="' + name + '" value="' + escapeHtml(value) + '">' +
+        "<span>" + escapeHtml(label) + "</span>" +
+      "</label>"
+    );
+  }
+
+  function formatOrderPrice(price) {
+    if (!price) return "문의";
+    var text = String(price);
+    if (text.includes("문의")) return text;
+    if (!/[\d]/.test(text)) return text;
+    return text.replace(/~$/, "") + "원";
+  }
+
+  function getApiAmount(entry) {
+    var item = entry.item;
+    if (!item || String(item.price || "").includes("문의")) return 0;
+    var unit = parseAmount(vtsAdjustedPrice(item));
+    if (item.perVariantPricing && item.variants && item.variants.length) {
+      return unit * (entry.variants ? entry.variants.length : 0);
+    }
+    return unit;
+  }
+
+  function createQuantityControl(inputName) {
+    return (
+      '<div class="order-quantity-control">' +
+        '<button type="button" class="order-qty-btn" data-qty-target="' + inputName + '" data-qty-step="-1" aria-label="수량 줄이기">−</button>' +
+        '<input class="order-qty-input" type="number" name="' + inputName + '" min="0" max="99" value="0" inputmode="numeric">' +
+        '<button type="button" class="order-qty-btn" data-qty-target="' + inputName + '" data-qty-step="1" aria-label="수량 늘리기">+</button>' +
+      "</div>"
+    );
+  }
+
+  function createVariantOptions(apiId, variants) {
+    if (!variants || !variants.length) return "";
+    return (
+      '<div class="order-api-options" data-api-variants="' + apiId + '" hidden>' +
+        '<p class="order-api-options-label">타입</p>' +
+        '<div class="order-variant-list">' +
+          variants.map(function (variant, variantIndex) {
+            var displayLabel = variant.label || variant.desc || "";
+            return (
+              '<label class="order-variant-choice">' +
+                '<input type="checkbox" name="variant-' + apiId + '" value="' + variantIndex + '">' +
+                '<span class="order-variant-body">' +
+                  (variant.label
+                    ? '<span class="order-variant-label">' + escapeHtml(variant.label) + "</span>" +
+                      (variant.desc ? '<span class="order-variant-desc">' + escapeHtml(variant.desc) + "</span>" : "")
+                    : '<span class="order-variant-label">' + escapeHtml(displayLabel) + "</span>") +
+                "</span>" +
+              "</label>"
+            );
+          }).join("") +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function createApiBlock(categoryKey, categoryLabel, entries) {
+    if (!entries.length) return "";
+    var blocks = entries.map(function (entry) {
+      var item = entry.item;
+      var index = entry.idx;
+      var apiId = categoryKey + "-" + index;
+      return (
+        '<div class="order-api-item">' +
+          '<label class="order-api-head">' +
+            '<input type="checkbox" class="order-api-toggle" name="api" value="' + apiId + '" ' +
+              'data-category="' + categoryKey + '" data-index="' + index + '"' +
+              (item.variants && item.variants.length ? ' data-has-variants="true"' : "") + ">" +
+            '<span class="order-api-info">' +
+              '<span class="order-api-name">' + escapeHtml(item.title) + "</span>" +
+              (item.desc ? '<span class="order-api-desc">' + escapeHtmlBr(item.desc) + "</span>" : "") +
+            "</span>" +
+            '<span class="order-api-price">' + escapeHtml(formatOrderPrice(vtsAdjustedPrice(item))) + "</span>" +
+          "</label>" +
+          createVariantOptions(apiId, item.variants) +
+        "</div>"
+      );
+    }).join("");
+    return (
+      '<section class="order-section">' +
+        '<h3 class="order-section-title">' + escapeHtml(categoryLabel) + "</h3>" +
+        '<div class="order-api-list">' + blocks + "</div>" +
+      "</section>"
+    );
+  }
+
+  function buildForm() {
+    var cfg = ORDER_CONFIG;
+    var apiSections = cfg.categories.map(function (cat) {
+      return createApiBlock(cat.key, cat.label, getPlatformEntries(cat.key));
+    }).join("");
+
+    form.innerHTML =
+      '<section class="order-section">' +
+        '<h3 class="order-section-title">기본 정보</h3>' +
+        (orderPlatform === "vts" ? "" : createField("Warudo 버전", createRadioGroup("warudo", cfg.warudoVersions))) +
+        createField(
+          "방송 플랫폼",
+          '<div class="order-platform-field">' +
+            '<div class="order-choice-group order-choice-group--wrap order-choice-group--platform">' +
+              cfg.platforms.map(function (platform) {
+                return createCheckbox("platform", platform.id, platform.label);
+              }).join("") +
+              '<label class="order-choice order-choice--platform-other">' +
+                '<input type="checkbox" name="platform-other-toggle" value="other">' +
+                "<span>기타</span>" +
+              "</label>" +
+              '<input class="order-input order-platform-other" type="text" name="platform-other" placeholder="' +
+                escapeHtml(cfg.platformOtherPlaceholder) +
+              '" disabled>' +
+            "</div>" +
+          "</div>"
+        ) +
+        createField("세팅 방식", createRadioGroup("setup", cfg.setupMethods)) +
+      "</section>" +
+      apiSections +
+      '<section class="order-section">' +
+        '<h3 class="order-section-title">추가 옵션</h3>' +
+        '<div class="order-choice-group">' +
+          createCheckbox("private", "yes", cfg.privateLabel, "order-choice--accent") +
+        "</div>" +
+        createField(
+          "요청사항",
+          '<textarea class="order-textarea" name="note" rows="4" placeholder="원하시는 연출, 일정, 참고 자료 등"></textarea>'
+        ) +
+      "</section>";
+  }
+
+  function getCheckedLabels(name) {
+    return Array.prototype.slice
+      .call(form.querySelectorAll('input[name="' + name + '"]:checked'))
+      .map(function (el) {
+        var label = el.closest("label");
+        return label ? label.querySelector("span").textContent.trim() : el.value;
+      });
+  }
+
+  function getRadioLabel(name) {
+    var checked = form.querySelector('input[name="' + name + '"]:checked');
+    if (!checked) return "";
+    var label = checked.closest("label");
+    return label ? label.querySelector("span").textContent.trim() : checked.value;
+  }
+
+  function getPlatformLabels() {
+    var platforms = getCheckedLabels("platform");
+    var otherToggle = form.querySelector('input[name="platform-other-toggle"]');
+    var otherInput = form.elements["platform-other"];
+    if (otherToggle && otherToggle.checked && otherInput) {
+      var other = otherInput.value.trim();
+      if (other) platforms.push(other);
+    }
+    return platforms;
+  }
+
+  function syncPlatformOtherInput() {
+    var otherToggle = form.querySelector('input[name="platform-other-toggle"]');
+    var otherInput = form.elements["platform-other"];
+    if (!otherToggle || !otherInput) return;
+    otherInput.disabled = !otherToggle.checked;
+    if (!otherToggle.checked) otherInput.value = "";
+  }
+
+  function getSelectedVariants(apiId, item) {
+    if (!item.variants || !item.variants.length) return [];
+    return Array.prototype.slice
+      .call(form.querySelectorAll('input[name="variant-' + apiId + '"]:checked'))
+      .map(function (el) {
+        return item.variants[parseInt(el.value, 10)];
+      })
+      .filter(Boolean);
+  }
+
+  function getSelectedApis() {
+    return Array.prototype.slice.call(form.querySelectorAll(".order-api-toggle:checked")).map(function (el) {
+      var category = el.dataset.category;
+      var index = parseInt(el.dataset.index, 10);
+      var item = (PRICE_ITEMS[category] || [])[index];
+      var apiId = category + "-" + index;
+      return { category: category, item: item, variants: getSelectedVariants(apiId, item) };
+    });
+  }
+
+  function calculateEstimate(selectedApis, isPrivate) {
+    var total = 0;
+    selectedApis.forEach(function (entry) {
+      total += getApiAmount(entry);
+    });
+    if (isPrivate) total += ORDER_CONFIG.privateFee;
+    return total;
+  }
+
+  function appendOrderEntries(lines, entries) {
+    if (!entries.length) {
+      lines.push("- (미선택)");
+      return;
+    }
+    entries.forEach(function (entry) {
+      var amount = getApiAmount(entry);
+      var priceNote = entry.item.perVariantPricing && entry.variants && entry.variants.length
+        ? formatWon(amount) + " · " + entry.variants.length + "타입"
+        : formatWon(amount);
+      lines.push("- " + entry.item.title + " (" + priceNote + ")");
+      if (entry.variants && entry.variants.length) {
+        entry.variants.forEach(function (variant) {
+          lines.push("  · " + (variant.label || variant.desc));
+        });
+      } else if (entry.item.desc) {
+        lines.push("  " + entry.item.desc);
+      }
+    });
+  }
+
+  function buildPreviewText() {
+    var note = form.elements.note ? form.elements.note.value.trim() : "";
+    var selectedApis = getSelectedApis();
+    var apiEntries = selectedApis.filter(function (entry) {
+      return entry.category === "api-fan" || entry.category === "api-basic" || entry.category === "api-custom";
+    });
+    var propEntries = selectedApis.filter(function (entry) {
+      return entry.category === "prop-production";
+    });
+    var isPrivate = form.querySelector('input[name="private"]:checked');
+    var lines = ["[Rabbi API 주문서]", ""];
+
+    lines.push("■ 엔진: " + (orderPlatform === "vts" ? "VTube Studio" : "Warudo"));
+    if (orderPlatform !== "vts") lines.push("■ Warudo: " + getRadioLabel("warudo"));
+    lines.push("■ 플랫폼: " + (getPlatformLabels().join(", ") || "(미선택)"));
+    lines.push("■ 세팅: " + getRadioLabel("setup"));
+    lines.push("■ 비공개: " + (isPrivate ? "예 (+20,000원)" : "아니오"));
+    lines.push("");
+    lines.push("■ 신청 API");
+    appendOrderEntries(lines, apiEntries);
+
+    if (propEntries.length) {
+      lines.push("");
+      lines.push("■ PROP 제작");
+      appendOrderEntries(lines, propEntries);
+    }
+
+    if (note) {
+      lines.push("");
+      lines.push("■ 요청사항");
+      lines.push(note);
+    }
+
+    lines.push("");
+    lines.push("■ 총 금액: " + formatWon(calculateEstimate(selectedApis, !!isPrivate)) + (hasVariableEstimate(selectedApis) ? " (일부 항목 문의)" : ""));
+
+    return lines.join("\n");
+  }
+
+  function updateFormState() {
+    syncPlatformOtherInput();
+
+    Array.prototype.forEach.call(form.querySelectorAll(".order-api-toggle"), function (toggle) {
+      var variantBox = form.querySelector('[data-api-variants="' + toggle.value + '"]');
+      if (!variantBox) return;
+      variantBox.hidden = !toggle.checked;
+      if (!toggle.checked) {
+        Array.prototype.forEach.call(variantBox.querySelectorAll('input[type="checkbox"]'), function (input) {
+          input.checked = false;
+        });
+      }
+    });
+
+    preview.value = buildPreviewText();
+    if (window.sendHeight) window.sendHeight();
+  }
+
+  function copyOrderText(done) {
+    var text = preview.value;
+    if (!text) { if (done) done(false); return; }
+    function finish(ok) { if (done) done(ok !== false); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { finish(true); }).catch(function () {
+        preview.select();
+        try { document.execCommand("copy"); finish(true); } catch (e) { finish(false); }
+      });
+      return;
+    }
+    preview.select();
+    try { document.execCommand("copy"); finish(true); } catch (e) { finish(false); }
+  }
+
+  function flashButton(btn, message, restore) {
+    var prev = btn.textContent;
+    btn.textContent = message;
+    setTimeout(function () {
+      btn.textContent = typeof restore === "function" ? restore() : (restore || prev);
+    }, 1800);
+  }
+
+  form.addEventListener("change", updateFormState);
+  form.addEventListener("input", updateFormState);
+  form.addEventListener("click", function (event) {
+    var btn = event.target.closest(".order-qty-btn");
+    if (!btn) return;
+    event.preventDefault();
+    var input = form.querySelector('[name="' + btn.dataset.qtyTarget + '"]');
+    if (!input) return;
+    var min = parseInt(input.min, 10) || 0;
+    var max = parseInt(input.max, 10) || 99;
+    var step = parseInt(btn.dataset.qtyStep, 10) || 0;
+    input.value = String(Math.min(max, Math.max(min, (parseInt(input.value, 10) || 0) + step)));
+    updateFormState();
+  });
+
+  copyBtn.addEventListener("click", function () {
+    copyOrderText(function () {
+      flashButton(copyBtn, "복사 완료!", "주문서 복사");
+    });
+  });
+
+  if (platformTabs) {
+    Array.prototype.forEach.call(platformTabs.querySelectorAll(".order-platform-tab"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (btn.dataset.orderPlatform === orderPlatform) return;
+        Array.prototype.forEach.call(platformTabs.querySelectorAll(".order-platform-tab"), function (b) {
+          b.classList.remove("is-active");
+        });
+        btn.classList.add("is-active");
+        orderPlatform = btn.dataset.orderPlatform;
+        buildForm();
+        updateFormState();
+      });
+    });
+  }
+
+  buildForm();
+  updateFormState();
+})();
